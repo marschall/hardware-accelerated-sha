@@ -49,41 +49,85 @@ public final class HardwareSha1 extends MessageDigestSpi {
 
   @Override
   protected void engineUpdate(byte input) {
-    // TODO Auto-generated method stub
-
+    if (this.blockIndex == 15) {
+      this.processBlock();
+    }
+    this.block[this.blockIndex++] = input;
+    this.bytesWritten += 1;
   }
 
   @Override
   protected void engineUpdate(byte[] input, int offset, int len) {
-    // TODO Auto-generated method stub
-
+    if (this.blockIndex == 15) {
+      this.processBlock();
+    }
+    // fill the remainder of the buffer
+    if (this.blockIndex != 0) {
+    }
+    // avoid array copies to the buffer, directly hash the input instead
+    // copy the rest, by definition less than a block
   }
 
   @Override
   protected int engineDigest(byte[] buf, int offset, int len) throws DigestException {
     if (offset < 0) {
-      throw new IllegalArgumentException("negative offset");
+      throw new DigestException("negative offset");
     }
     if (len < DIGEST_SIZE) {
-      throw new IllegalArgumentException("buffer too small");
+      throw new DigestException("buffer too small");
     }
-    if (Math.addExact(offset, DIGEST_SIZE) > buf.length) {
-      throw new IllegalArgumentException("buffer overflow");
+    if ((buf.length - offset) < DIGEST_SIZE) {
+      throw new DigestException("buffer overflow");
     }
     // TODO Auto-generated method stub
-    return super.engineDigest(buf, offset, len);
+    copyState(this.state, buf, offset);
+    return DIGEST_SIZE;
   }
 
   @Override
   protected byte[] engineDigest() {
     // TODO Auto-generated method stub
-    return null;
+    byte[] digest = new byte[DIGEST_SIZE];
+    copyState(this.state, digest, 0);
+    return digest;
+  }
+  
+  private static void copyState(int[] state, byte[] digest, int offset) {
+    int i0 = state[0];
+    digest[0] = (byte) (i0 >>> 24);
+    digest[1] = (byte) ((i0 >>> 16) & 0xFF);
+    digest[2] = (byte) ((i0 >>> 8) & 0xFF);
+    digest[3] = (byte) (i0 & 0xFF);
+    
+    int i1 = state[1];
+    digest[4] = (byte) (i1 >>> 24);
+    digest[5] = (byte) ((i1 >>> 16) & 0xFF);
+    digest[6] = (byte) ((i1 >>> 8) & 0xFF);
+    digest[7] = (byte) (i1 & 0xFF);
+    
+    int i2 = state[2];
+    digest[8] = (byte) (i2 >>> 24);
+    digest[9] = (byte) ((i2 >>> 16) & 0xFF);
+    digest[10] = (byte) ((i2 >>> 8) & 0xFF);
+    digest[11] = (byte) (i2 & 0xFF);
+    
+    int i3 = state[3];
+    digest[12] = (byte) (i3 >>> 24);
+    digest[13] = (byte) ((i3 >>> 16) & 0xFF);
+    digest[14] = (byte) ((i3 >>> 8) & 0xFF);
+    digest[15] = (byte) (i3 & 0xFF);
+    
+    int i4 = state[4];
+    digest[16] = (byte) (i4 >>> 24);
+    digest[17] = (byte) ((i4 >>> 16) & 0xFF);
+    digest[18] = (byte) ((i4 >>> 8) & 0xFF);
+    digest[19] = (byte) (i4 & 0xFF);
   }
 
-  private void processBlock() throws DigestException {
+  private void processBlock() {
     int success = processBlock0(this.block, 0, this.state);
     if (success != 0) {
-      throw new DigestException("SHA-1 calculation failed");
+      throw new UncheckedDigestException("SHA-1 calculation failed");
     }
     this.blockIndex = 0;
   }
@@ -96,6 +140,10 @@ public final class HardwareSha1 extends MessageDigestSpi {
   }
 
   private static native int processBlock0(byte[] input, int offset, int[] state);
+  
+  static boolean isSupported() {
+    return isSupported0();
+  }
 
   private static native boolean isSupported0();
 
