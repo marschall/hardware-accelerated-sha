@@ -4,7 +4,15 @@ import java.security.DigestException;
 import java.security.MessageDigestSpi;
 import java.util.Arrays;
 
-public final class HardwareSHA extends MessageDigestSpi {
+/**
+ * 
+ * @see <a href="https://software.intel.com/content/www/us/en/develop/articles/intel-sha-extensions.html">New Instructions Supporting the Secure Hash Algorithm on Intel® Architecture Processors</a>
+ * @see <a href="https://en.wikipedia.org/wiki/Intel_SHA_extensions">Intel SHA extensions</a>
+ *
+ */
+public final class HardwareSha1 extends MessageDigestSpi {
+  
+  // https://github.com/noloader/SHA-Intrinsics
 
   /**
    * Size of the digest in bytes.
@@ -27,7 +35,7 @@ public final class HardwareSHA extends MessageDigestSpi {
    */
    private int blockIndex;
 
-  public HardwareSHA() {
+  public HardwareSha1() {
     this.block = new byte[BLOCK_SIZE];
     this.blockIndex = 0;
     this.bytesWritten = 0L;
@@ -59,6 +67,9 @@ public final class HardwareSHA extends MessageDigestSpi {
     if (len < DIGEST_SIZE) {
       throw new IllegalArgumentException("buffer too small");
     }
+    if (Math.addExact(offset, DIGEST_SIZE) > buf.length) {
+      throw new IllegalArgumentException("buffer overflow");
+    }
     // TODO Auto-generated method stub
     return super.engineDigest(buf, offset, len);
   }
@@ -69,8 +80,11 @@ public final class HardwareSHA extends MessageDigestSpi {
     return null;
   }
 
-  private void processBlock() {
-    processBlock0(this.block, 0, this.state);
+  private void processBlock() throws DigestException {
+    int success = processBlock0(this.block, 0, this.state);
+    if (success != 0) {
+      throw new DigestException("SHA-1 calculation failed");
+    }
     this.blockIndex = 0;
   }
 
@@ -81,7 +95,7 @@ public final class HardwareSHA extends MessageDigestSpi {
     this.blockIndex = 0;
   }
 
-  private static native void processBlock0(byte[] input, int offset, int[] state);
+  private static native int processBlock0(byte[] input, int offset, int[] state);
 
   private static native boolean isSupported0();
 

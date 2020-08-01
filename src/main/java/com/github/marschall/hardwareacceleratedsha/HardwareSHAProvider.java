@@ -29,7 +29,7 @@ public final class HardwareSHAProvider extends Provider {
    */
   public HardwareSHAProvider() {
     super(NAME, 0.2d, "rdrand (SecureRandom)");
-    this.put("MessageDigest." + ALGORITHM, HardwareSHA.class.getName());
+    this.put("MessageDigest." + ALGORITHM, HardwareSha1.class.getName());
     this.put("MessageDigest." + ALGORITHM + " ImplementedIn", "Hardware");
   }
 
