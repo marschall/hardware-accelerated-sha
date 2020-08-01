@@ -230,4 +230,12 @@ JNIEXPORT jboolean JNICALL Java_com_github_marschall_hardwareacceleratedsha_Hard
     ABCD = _mm_shuffle_epi32(ABCD, 0x1B);
     _mm_storeu_si128((__m128i*) state, ABCD);
     state[4] = _mm_extract_epi32(E0, 3);
+
+    /* copy from stack to Java to stack */
+    (*env)->SetIntArrayRegion(env, jstate, 0, 5, state);
+    if (((*env)->ExceptionCheck(env)) == JNI_TRUE)
+    {
+        return -1;
+    }
+    return 0;
 }
