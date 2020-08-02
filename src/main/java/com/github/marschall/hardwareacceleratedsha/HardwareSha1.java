@@ -24,10 +24,19 @@ public final class HardwareSha1 extends MessageDigestSpi {
    */
   private static final int BLOCK_SIZE = 64;
 
+  /**
+   * Total number of byte written so far, used for padding.
+   */
   private long bytesWritten;
 
+  /**
+   * The current block, of size {@value #BLOCK_SIZE} bytes.
+   */
   private final byte[] block;
 
+  /**
+   * 160bit current state.
+   */
   private final int[] state;
 
   /**
@@ -49,7 +58,7 @@ public final class HardwareSha1 extends MessageDigestSpi {
 
   @Override
   protected void engineUpdate(byte input) {
-    if (this.blockIndex == 15) {
+    if (this.blockIndex == BLOCK_SIZE) {
       this.processBlock();
     }
     this.block[this.blockIndex++] = input;
@@ -58,11 +67,24 @@ public final class HardwareSha1 extends MessageDigestSpi {
 
   @Override
   protected void engineUpdate(byte[] input, int offset, int len) {
-    if (this.blockIndex == 15) {
+    if (offset < 0) {
+      throw new ArrayIndexOutOfBoundsException();
+    }
+    if (len < 0) {
+      throw new ArrayIndexOutOfBoundsException();
+    }
+    if (offset > input.length - len) {
+      throw new ArrayIndexOutOfBoundsException();
+    }
+    
+    if (this.blockIndex == BLOCK_SIZE) {
       this.processBlock();
     }
     // fill the remainder of the buffer
     if (this.blockIndex != 0) {
+      int n = Math.min(BLOCK_SIZE - this.blockIndex, len);
+      System.arraycopy(input, offset, this.block, this.blockIndex, n);
+      this.bytesWritten += n;
     }
     // avoid array copies to the buffer, directly hash the input instead
     // copy the rest, by definition less than a block
@@ -76,7 +98,7 @@ public final class HardwareSha1 extends MessageDigestSpi {
     if (len < DIGEST_SIZE) {
       throw new DigestException("buffer too small");
     }
-    if ((buf.length - offset) < DIGEST_SIZE) {
+    if (DIGEST_SIZE > (buf.length - offset)) {
       throw new DigestException("buffer overflow");
     }
     // TODO Auto-generated method stub

@@ -107,8 +107,8 @@
           </java>
           <c>
             <options>
-              <option>-mrdrnd</option>
-              <option>-mrdseed</option>
+              <option>-msse4.1</option>
+              <option>-msha</option>
               <option>-std=c99</option>
             </options>
           </c>
