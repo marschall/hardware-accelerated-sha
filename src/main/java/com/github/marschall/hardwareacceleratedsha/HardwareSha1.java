@@ -12,6 +12,9 @@ import java.util.Arrays;
  */
 public final class HardwareSha1 extends MessageDigestSpi {
 
+//  private static final VarHandle LONG_VIEW_HANDLE = MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.BIG_ENDIAN);
+//  private static final VarHandle INT_VIEW_HANDLE = MethodHandles.byteArrayViewVarHandle(int[].class, ByteOrder.BIG_ENDIAN);
+
   /**
    * Size of the digest in bytes.
    */
@@ -137,6 +140,7 @@ public final class HardwareSha1 extends MessageDigestSpi {
 
   private void writeLength() {
     long bitLength = this.bytesWritten << 3;
+    // LONG_VIEW_HANDLE.set(this.block, 7, bitLength);
     this.block[56] = (byte) (bitLength >>> 56);
     this.block[57] = (byte) ((bitLength >>> 48) & 0xFF);
     this.block[58] = (byte) ((bitLength >>> 40) & 0xFF);
@@ -173,6 +177,11 @@ public final class HardwareSha1 extends MessageDigestSpi {
 
 
   private static void copyState(int[] state, byte[] digest, int offset) {
+    // INT_VIEW_HANDLE.set(digest, 0, state[0]);
+    // INT_VIEW_HANDLE.set(digest, 1, state[1]);
+    // INT_VIEW_HANDLE.set(digest, 2, state[2]);
+    // INT_VIEW_HANDLE.set(digest, 3, state[3]);
+    // INT_VIEW_HANDLE.set(digest, 4, state[4]);
     int i0 = state[0];
     digest[0] = (byte) (i0 >>> 24);
     digest[1] = (byte) ((i0 >>> 16) & 0xFF);
