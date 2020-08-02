@@ -4,7 +4,7 @@ import java.security.DigestException;
 import java.security.MessageDigestSpi;
 
 /**
- * 
+ *
  * @see <a href="https://software.intel.com/content/www/us/en/develop/articles/intel-sha-extensions.html">New Instructions Supporting the Secure Hash Algorithm on Intel® Architecture Processors</a>
  * @see <a href="https://en.wikipedia.org/wiki/Intel_SHA_extensions">Intel SHA extensions</a>
  *
@@ -60,11 +60,15 @@ public final class HardwareSha1 extends MessageDigestSpi {
 
   @Override
   protected void engineUpdate(byte input) {
+    this.processBlockIfFull();
+    this.block[this.blockIndex++] = input;
+    this.bytesWritten += 1;
+  }
+
+  private void processBlockIfFull() {
     if (this.blockIndex == BLOCK_SIZE) {
       this.processBlock();
     }
-    this.block[this.blockIndex++] = input;
-    this.bytesWritten += 1;
   }
 
   @Override
@@ -75,21 +79,33 @@ public final class HardwareSha1 extends MessageDigestSpi {
     if (len < 0) {
       throw new ArrayIndexOutOfBoundsException();
     }
-    if (offset > input.length - len) {
+    if (offset > (input.length - len)) {
       throw new ArrayIndexOutOfBoundsException();
     }
-
-    if (this.blockIndex == BLOCK_SIZE) {
-      this.processBlock();
-    }
+    int orignalLen = len;
     // fill the remainder of the buffer
     if (this.blockIndex != 0) {
+      this.processBlockIfFull();
       int n = Math.min(BLOCK_SIZE - this.blockIndex, len);
       System.arraycopy(input, offset, this.block, this.blockIndex, n);
-      this.bytesWritten += n;
+      len -= n;
+      offset += n;
     }
-    // avoid array copies to the buffer, directly hash the input instead
+    this.processBlockIfFull();
+    // full blocks, avoid array copies to the buffer, directly hash the input instead
+    while (len > BLOCK_SIZE) {
+      System.arraycopy(input, offset, this.block, this.blockIndex, BLOCK_SIZE);
+      this.processBlock();
+      len -= BLOCK_SIZE;
+      offset += BLOCK_SIZE;
+      this.blockIndex = 0;
+    }
     // copy the rest, by definition less than a block
+    if (len > 0) {
+      System.arraycopy(input, offset, this.block, this.blockIndex, len);
+      this.blockIndex += len;
+    }
+    this.bytesWritten += orignalLen;
   }
 
   @Override
