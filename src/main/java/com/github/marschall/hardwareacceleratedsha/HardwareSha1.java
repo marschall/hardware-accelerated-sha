@@ -2,7 +2,6 @@ package com.github.marschall.hardwareacceleratedsha;
 
 import java.security.DigestException;
 import java.security.MessageDigestSpi;
-import java.util.Arrays;
 
 /**
  * 
@@ -11,8 +10,6 @@ import java.util.Arrays;
  *
  */
 public final class HardwareSha1 extends MessageDigestSpi {
-  
-  // https://github.com/noloader/SHA-Intrinsics
 
   /**
    * Size of the digest in bytes.
@@ -42,8 +39,12 @@ public final class HardwareSha1 extends MessageDigestSpi {
   /**
    * Index of the next write in {@code #block}.
    */
-   private int blockIndex;
+  private int blockIndex;
 
+  /**
+   * Default constructor. Should not be called directly by client code
+   * but instead indirectly via JCA.
+   */
   public HardwareSha1() {
     this.block = new byte[BLOCK_SIZE];
     this.blockIndex = 0;
@@ -77,7 +78,7 @@ public final class HardwareSha1 extends MessageDigestSpi {
     if (offset > input.length - len) {
       throw new ArrayIndexOutOfBoundsException();
     }
-    
+
     if (this.blockIndex == BLOCK_SIZE) {
       this.processBlock();
     }
@@ -114,32 +115,32 @@ public final class HardwareSha1 extends MessageDigestSpi {
     copyState(this.state, digest, 0);
     return digest;
   }
-  
+
   private static void copyState(int[] state, byte[] digest, int offset) {
     int i0 = state[0];
     digest[0] = (byte) (i0 >>> 24);
     digest[1] = (byte) ((i0 >>> 16) & 0xFF);
     digest[2] = (byte) ((i0 >>> 8) & 0xFF);
     digest[3] = (byte) (i0 & 0xFF);
-    
+
     int i1 = state[1];
     digest[4] = (byte) (i1 >>> 24);
     digest[5] = (byte) ((i1 >>> 16) & 0xFF);
     digest[6] = (byte) ((i1 >>> 8) & 0xFF);
     digest[7] = (byte) (i1 & 0xFF);
-    
+
     int i2 = state[2];
     digest[8] = (byte) (i2 >>> 24);
     digest[9] = (byte) ((i2 >>> 16) & 0xFF);
     digest[10] = (byte) ((i2 >>> 8) & 0xFF);
     digest[11] = (byte) (i2 & 0xFF);
-    
+
     int i3 = state[3];
     digest[12] = (byte) (i3 >>> 24);
     digest[13] = (byte) ((i3 >>> 16) & 0xFF);
     digest[14] = (byte) ((i3 >>> 8) & 0xFF);
     digest[15] = (byte) (i3 & 0xFF);
-    
+
     int i4 = state[4];
     digest[16] = (byte) (i4 >>> 24);
     digest[17] = (byte) ((i4 >>> 16) & 0xFF);
@@ -154,7 +155,7 @@ public final class HardwareSha1 extends MessageDigestSpi {
     }
     this.blockIndex = 0;
   }
-  
+
   private void initializeState() {
     this.state[0] = 0x67452301;
     this.state[1] = 0xEFCDAB89;
@@ -171,7 +172,7 @@ public final class HardwareSha1 extends MessageDigestSpi {
   }
 
   private static native int processBlock0(byte[] input, int offset, int[] state);
-  
+
   static boolean isSupported() {
     return isSupported0();
   }
