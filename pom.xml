@@ -210,23 +210,30 @@
             <goals>
               <goal>jandex</goal>
             </goals>
-            <!-- at the moment jandex can't handle module-info.class -->
-            <configuration>
-              <fileSets>
-                <fileSet>
-                  <directory>${project.build.outputDirectory}</directory>
-                  <includes>
-                    <include>**/*.class</include>
-                  </includes>
-                  <excludes>
-                    <exclude>**/module-info.class</exclude>
-                  </excludes>
-                  <useDefaultExcludes>true</useDefaultExcludes>
-                </fileSet>
-              </fileSets>
-            </configuration>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>codes.rafael.modulemaker</groupId>
+        <artifactId>modulemaker-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>make-module</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <name>com.github.marschall.hardwareacceleratedsha</name>
+          <exports>com.github.marschall.hardwareacceleratedsha</exports>
+          <provides>
+            <provide>
+              <services>java.security.Provider</services>
+              <providers>com.github.marschall.directorykeystore.DirectoryKeystoreProvider</providers>
+            </provide>
+          </provides>
+        </configuration>
       </plugin>
       <plugin>
         <artifactId>maven-source-plugin</artifactId>
@@ -283,6 +290,11 @@
           <version>3.0.0</version>
         </plugin>
         <plugin>
+          <groupId>codes.rafael.modulemaker</groupId>
+          <artifactId>modulemaker-maven-plugin</artifactId>
+          <version>1.7</version>
+        </plugin>
+        <plugin>
           <artifactId>maven-resources-plugin</artifactId>
           <version>3.0.2</version>
         </plugin>
@@ -313,7 +325,7 @@
         <plugin>
           <groupId>org.jboss.jandex</groupId>
           <artifactId>jandex-maven-plugin</artifactId>
-          <version>1.0.5</version>
+          <version>1.0.8</version>
         </plugin>
         <plugin>
           <groupId>com.github.maven-nar</groupId>
@@ -339,6 +351,19 @@
                   </pluginExecutionFilter>
                   <action>
                     <ignore />
+                  </action>
+                </pluginExecution>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>codes.rafael.modulemaker</groupId>
+                    <artifactId>modulemaker-maven-plugin</artifactId>
+                    <versionRange>[1.7,)</versionRange>
+                    <goals>
+                      <goal>make-module</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore></ignore>
                   </action>
                 </pluginExecution>
               </pluginExecutions>
