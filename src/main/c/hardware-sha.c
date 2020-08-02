@@ -39,6 +39,7 @@ JNIEXPORT jint JNICALL Java_com_github_marschall_hardwareacceleratedsha_Hardware
   (JNIEnv *env, jclass clazz, jbyteArray input, jint offset, jintArray jstate)
 {
     _Static_assert (sizeof(jint) == sizeof(uint32_t), "sizeof(jint) == sizeof(uint32_t)");
+    _Static_assert (sizeof(int) == sizeof(uint32_t), "sizeof(int) == sizeof(uint32_t)");
     uint32_t state[5];
     uint8_t data[64];
     __m128i ABCD, ABCD_SAVE, E0, E0_SAVE, E1;
@@ -61,7 +62,7 @@ JNIEXPORT jint JNICALL Java_com_github_marschall_hardwareacceleratedsha_Hardware
     }
 
     /* Load initial values */
-    ABCD = _mm_loadu_si128((const __m128i*) state);
+    ABCD = _mm_loadu_si128((__m128i*) state);
     E0 = _mm_set_epi32((int) state[4], 0, 0, 0);
     ABCD = _mm_shuffle_epi32(ABCD, 0x1B);
 
@@ -70,14 +71,14 @@ JNIEXPORT jint JNICALL Java_com_github_marschall_hardwareacceleratedsha_Hardware
     E0_SAVE = E0;
 
     /* Rounds 0-3 */
-    MSG0 = _mm_loadu_si128((const __m128i*) (data + 0));
+    MSG0 = _mm_loadu_si128((__m128i*) (data + 0));
     MSG0 = _mm_shuffle_epi8(MSG0, MASK);
     E0 = _mm_add_epi32(E0, MSG0);
     E1 = ABCD;
     ABCD = _mm_sha1rnds4_epu32(ABCD, E0, 0);
 
     /* Rounds 4-7 */
-    MSG1 = _mm_loadu_si128((const __m128i*) (data + 16));
+    MSG1 = _mm_loadu_si128((__m128i*) (data + 16));
     MSG1 = _mm_shuffle_epi8(MSG1, MASK);
     E1 = _mm_sha1nexte_epu32(E1, MSG1);
     E0 = ABCD;
@@ -85,7 +86,7 @@ JNIEXPORT jint JNICALL Java_com_github_marschall_hardwareacceleratedsha_Hardware
     MSG0 = _mm_sha1msg1_epu32(MSG0, MSG1);
 
     /* Rounds 8-11 */
-    MSG2 = _mm_loadu_si128((const __m128i*) (data + 32));
+    MSG2 = _mm_loadu_si128((__m128i*) (data + 32));
     MSG2 = _mm_shuffle_epi8(MSG2, MASK);
     E0 = _mm_sha1nexte_epu32(E0, MSG2);
     E1 = ABCD;
@@ -94,7 +95,7 @@ JNIEXPORT jint JNICALL Java_com_github_marschall_hardwareacceleratedsha_Hardware
     MSG0 = _mm_xor_si128(MSG0, MSG2);
 
     /* Rounds 12-15 */
-    MSG3 = _mm_loadu_si128((const __m128i*) (data + 48));
+    MSG3 = _mm_loadu_si128((__m128i*) (data + 48));
     MSG3 = _mm_shuffle_epi8(MSG3, MASK);
     E1 = _mm_sha1nexte_epu32(E1, MSG3);
     E0 = ABCD;
