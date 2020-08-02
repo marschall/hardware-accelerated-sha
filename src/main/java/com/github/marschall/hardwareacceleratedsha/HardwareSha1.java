@@ -49,6 +49,7 @@ public final class HardwareSha1 extends MessageDigestSpi {
     this.blockIndex = 0;
     this.bytesWritten = 0L;
     this.state = new int[5];
+    this.initializeState();
   }
 
   @Override
@@ -153,10 +154,18 @@ public final class HardwareSha1 extends MessageDigestSpi {
     }
     this.blockIndex = 0;
   }
+  
+  private void initializeState() {
+    this.state[0] = 0x67452301;
+    this.state[1] = 0xEFCDAB89;
+    this.state[2] = 0x98BADCFE;
+    this.state[3] = 0x10325476;
+    this.state[4] = 0xC3D2E1F0;
+  }
 
   @Override
   protected void engineReset() {
-    Arrays.fill(this.block, (byte) 0);
+    this.initializeState();
     this.bytesWritten = 0L;
     this.blockIndex = 0;
   }
