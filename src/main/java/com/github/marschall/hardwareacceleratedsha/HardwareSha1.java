@@ -2,6 +2,7 @@ package com.github.marschall.hardwareacceleratedsha;
 
 import java.security.DigestException;
 import java.security.MessageDigestSpi;
+import java.util.Arrays;
 
 /**
  *
@@ -60,9 +61,9 @@ public final class HardwareSha1 extends MessageDigestSpi {
 
   @Override
   protected void engineUpdate(byte input) {
-    this.processBlockIfFull();
     this.block[this.blockIndex++] = input;
     this.bytesWritten += 1;
+    this.processBlockIfFull();
   }
 
   private void processBlockIfFull() {
@@ -85,13 +86,12 @@ public final class HardwareSha1 extends MessageDigestSpi {
     int orignalLen = len;
     // fill the remainder of the buffer
     if (this.blockIndex != 0) {
-      this.processBlockIfFull();
       int n = Math.min(BLOCK_SIZE - this.blockIndex, len);
       System.arraycopy(input, offset, this.block, this.blockIndex, n);
       len -= n;
       offset += n;
+      this.processBlockIfFull();
     }
-    this.processBlockIfFull();
     // full blocks, avoid array copies to the buffer, directly hash the input instead
     while (len > BLOCK_SIZE) {
       System.arraycopy(input, offset, this.block, this.blockIndex, BLOCK_SIZE);
@@ -108,6 +108,45 @@ public final class HardwareSha1 extends MessageDigestSpi {
     this.bytesWritten += orignalLen;
   }
 
+  private void finish() {
+    // padding: 1 and fill with 0
+    // we check the index at the end of every #engineUpdate method
+    // so we know the this.blockIndex will never be BLOCK_SIZE
+    // which means we can unconditionally write
+    this.block[this.blockIndex++] = (byte) 0x80;
+    if (this.blockIndex > 56) {
+      // length does not fit in the current block, we need to finish this block and open a new one
+
+      // fill the rest of the block with 0
+      Arrays.fill(this.block, this.blockIndex, BLOCK_SIZE, (byte) 0);
+      this.processBlock();
+
+      // fill the start of the block with 0
+      Arrays.fill(this.block, 0, BLOCK_SIZE - 8, (byte) 0);
+      this.writeLength();
+      this.processBlock();
+    } else {
+      // length fits in the current block
+
+      // fill the rest of the block except with length bytes with 0
+      Arrays.fill(this.block, this.blockIndex, BLOCK_SIZE - 8, (byte) 0);
+      this.writeLength();
+      this.processBlock();
+    }
+  }
+
+  private void writeLength() {
+    long bitLength = this.bytesWritten << 3;
+    this.block[56] = (byte) (bitLength >>> 56);
+    this.block[57] = (byte) ((bitLength >>> 48) & 0xFF);
+    this.block[58] = (byte) ((bitLength >>> 40) & 0xFF);
+    this.block[59] = (byte) ((bitLength >>> 32) & 0xFF);
+    this.block[60] = (byte) ((bitLength >>> 24) & 0xFF);
+    this.block[61] = (byte) ((bitLength >>> 16) & 0xFF);
+    this.block[62] = (byte) ((bitLength >>> 8) & 0xFF);
+    this.block[63] = (byte) (bitLength & 0xFF);
+  }
+
   @Override
   protected int engineDigest(byte[] buf, int offset, int len) throws DigestException {
     if (offset < 0) {
@@ -119,18 +158,19 @@ public final class HardwareSha1 extends MessageDigestSpi {
     if (DIGEST_SIZE > (buf.length - offset)) {
       throw new DigestException("buffer overflow");
     }
-    // TODO Auto-generated method stub
+    this.finish();
     copyState(this.state, buf, offset);
     return DIGEST_SIZE;
   }
 
   @Override
   protected byte[] engineDigest() {
-    // TODO Auto-generated method stub
+    this.finish();
     byte[] digest = new byte[DIGEST_SIZE];
     copyState(this.state, digest, 0);
     return digest;
   }
+
 
   private static void copyState(int[] state, byte[] digest, int offset) {
     int i0 = state[0];

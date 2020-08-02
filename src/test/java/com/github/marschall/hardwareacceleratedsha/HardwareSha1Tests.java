@@ -62,6 +62,32 @@ class HardwareSha1Tests {
 
   @ParameterizedTest
   @MethodSource("messageDigests")
+  void oneBlockMinusLength(MessageDigest messageDigest) {
+    byte[] message = new byte[56]; // block size minus 64 bit for length
+    for (int i = 0; i < message.length; i++) {
+      message[i] = (byte) i;
+    }
+    messageDigest.update(message);
+    byte[] digest = messageDigest.digest();
+    byte[] expected = new byte[] {99, 110, 46, -58, -104, -38, -55, 3, 73, -114, 100, -117, -46, -13, -81, 100, 29, 60, -120, -53};
+    assertArrayEquals(expected, digest);
+  }
+
+  @ParameterizedTest
+  @MethodSource("messageDigests")
+  void oneBlockMinusLengthAndOne(MessageDigest messageDigest) {
+    byte[] message = new byte[55]; // block size minus 64 bit for length and one 1 byte
+    for (int i = 0; i < message.length; i++) {
+      message[i] = (byte) i;
+    }
+    messageDigest.update(message);
+    byte[] digest = messageDigest.digest();
+    byte[] expected = new byte[] {-118, -30, -44, 103, 41, -49, -26, -113, -7, 39, -81, 94, -20, -100, 125, 27, 102, -42, 90, -62};
+    assertArrayEquals(expected, digest);
+  }
+
+  @ParameterizedTest
+  @MethodSource("messageDigests")
   void oneBlockWithOffset(MessageDigest messageDigest) {
     byte[] message = new byte[66];
     for (int i = 0; i < message.length; i++) {
