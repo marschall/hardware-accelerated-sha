@@ -230,7 +230,7 @@
           <provides>
             <provide>
               <services>java.security.Provider</services>
-              <providers>com.github.marschall.directorykeystore.DirectoryKeystoreProvider</providers>
+              <providers>om.github.marschall.hardwareacceleratedsha.HardwareSHAProvider</providers>
             </provide>
           </provides>
         </configuration>
